@@ -19,13 +19,22 @@ object Main extends StreamApp[IO] {
     } yield ()
   }
 
+  def runProgramStream(helloStub: GreeterFs2Grpc[IO]): Stream[IO, Unit] = {
+    for {
+      responses <- helloStub.sayHelloStream(Stream.fromIterator[IO, HelloRequest](
+        List(HelloRequest("John Doe"), HelloRequest("Joe Shmoe")).toIterator), new Metadata())
+      _ ← Stream(println("koko"))
+    } yield ()
+  }
+
   override def stream(
       args: List[String],
       requestShutdown: IO[Unit]): fs2.Stream[IO, StreamApp.ExitCode] = {
     for {
       managedChannel <- managedChannelStream
       helloStub = GreeterFs2Grpc.stub[IO](managedChannel)
-      _ <- Stream.eval(runProgram(helloStub))
+      //_ <- Stream.eval(runProgram(helloStub))
+      _ <- runProgramStream(helloStub)
     } yield StreamApp.ExitCode.Success
   }
 }

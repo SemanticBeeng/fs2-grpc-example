@@ -2,3 +2,7 @@
 *.log
 
 target/
+.idea
+project/.ivy
+project/.boot
+project/.sbtboot
