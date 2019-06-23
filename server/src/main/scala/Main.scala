@@ -1,12 +1,14 @@
-import cats.effect.IO
+import cats.effect._
+import cats.syntax.flatMap._
 import com.example.protos.hello._
 import fs2._
 import io.grpc._
 import io.grpc.protobuf.services.ProtoReflectionService
-import org.lyranthe.fs2_grpc.java_runtime.implicits._
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.lyranthe.fs2_grpc.java_runtime.implicits._
 
 class ExampleImplementation extends GreeterFs2Grpc[IO] {
+
   override def sayHello(request: HelloRequest,
                         clientHeaders: Metadata): IO[HelloReply] = {
     IO(HelloReply("Request name is: " + request.name))
@@ -15,7 +17,7 @@ class ExampleImplementation extends GreeterFs2Grpc[IO] {
   override def sayHelloStream(
       request: Stream[IO, HelloRequest],
       clientHeaders: Metadata): Stream[IO, HelloReply] = {
-    request.evalMap(req => sayHello(req, clientHeaders))
+    request.evalMap(req => IO(println(s"Responding to $req")) >> sayHello(req, clientHeaders))
   }
 }
 

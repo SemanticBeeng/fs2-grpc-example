@@ -23,7 +23,7 @@ object Main extends StreamApp[IO] {
     for {
       responses <- helloStub.sayHelloStream(Stream.fromIterator[IO, HelloRequest](
         List(HelloRequest("John Doe"), HelloRequest("Joe Shmoe")).toIterator), new Metadata())
-      _ ← Stream(println("koko"))
+      _ ← Stream.eval(IO(println(responses.message)))
     } yield ()
   }
 
