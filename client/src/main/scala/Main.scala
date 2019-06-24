@@ -25,10 +25,7 @@ object Main extends StreamApp[IO] {
   def runProgramStream(helloStub: GreeterFs2Grpc[IO]): Stream[IO, Unit] = {
 
     val hellos = Stream.eval(IO(HelloRequest("Mr John Doe"))) ++ Stream.eval(IO(HelloRequest("Anastasia")))
-    for {
-      responses <- helloStub.sayHelloStream(hellos, new Metadata())
-      _ ← Stream.eval(IO(println(responses.message)))
-    } yield ()
+    helloStub.sayHelloStream(hellos, new Metadata()).map(reply ⇒ println(reply.message))
   }
 
   override def stream(
