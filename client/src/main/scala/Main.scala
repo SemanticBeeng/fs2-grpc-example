@@ -19,10 +19,14 @@ object Main extends StreamApp[IO] {
     } yield ()
   }
 
+  /**
+    * #todo experiment with https://github.com/fiadliel/fs2-grpc/blob/88dbc747e7f093b3f7344cd365bc60d8f2d52d5c/java-runtime/src/test/scala/client/ClientSuite.scala#L194-L218
+    */
   def runProgramStream(helloStub: GreeterFs2Grpc[IO]): Stream[IO, Unit] = {
+
+    val hellos = Stream.eval(IO(HelloRequest("Mr John Doe"))) ++ Stream.eval(IO(HelloRequest("Anastasia")))
     for {
-      responses <- helloStub.sayHelloStream(Stream.fromIterator[IO, HelloRequest](
-        List(HelloRequest("John Doe"), HelloRequest("Joe Shmoe")).toIterator), new Metadata())
+      responses <- helloStub.sayHelloStream(hellos, new Metadata())
       _ ← Stream.eval(IO(println(responses.message)))
     } yield ()
   }

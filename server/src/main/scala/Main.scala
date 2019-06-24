@@ -4,10 +4,15 @@ import com.example.protos.hello._
 import fs2._
 import io.grpc._
 import io.grpc.protobuf.services.ProtoReflectionService
-import scala.concurrent.ExecutionContext.Implicits.global
 import org.lyranthe.fs2_grpc.java_runtime.implicits._
+//
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+
 
 class ExampleImplementation extends GreeterFs2Grpc[IO] {
+
+  implicit val timer: Timer[IO] = IO.timer(global)
 
   override def sayHello(request: HelloRequest,
                         clientHeaders: Metadata): IO[HelloReply] = {
@@ -17,7 +22,20 @@ class ExampleImplementation extends GreeterFs2Grpc[IO] {
   override def sayHelloStream(
       request: Stream[IO, HelloRequest],
       clientHeaders: Metadata): Stream[IO, HelloReply] = {
-    request.evalMap(req => IO(println(s"Responding to $req")) >> sayHello(req, clientHeaders))
+
+    Stream.eval(IO(println(s"Responding to call."))) >>
+    request.evalMap({req ⇒
+        if (req.name.contains("Mr"))
+          IO(println(s"Responding to Mr $req")) >> sayHello(req, clientHeaders)
+        else for {
+          _ ← IO(println(s"Responding to lady $req once"))
+          _ ← sayHello(req, clientHeaders)
+          _ ← IO(println(s"Pausing a little ..."))
+          _ ← IO(println(s"Responding to lady $req again"))
+          _ ← timer.sleep(1 second)
+          r ← sayHello(req, clientHeaders)
+          } yield r
+      })
   }
 }
 
